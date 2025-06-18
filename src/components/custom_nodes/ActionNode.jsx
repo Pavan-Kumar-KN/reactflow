@@ -37,7 +37,7 @@ const ActionNode = ({ data, selected }) => {
         </div>
       </div>
 
-      {/* Vertical line with + button */}
+      {/* Vertical line with + button
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ marginTop: '12px', width: '2px', height: '50px', backgroundColor: '#9ca3af' }}></div>
         <div style={{ position: 'relative' }}>
@@ -63,7 +63,7 @@ const ActionNode = ({ data, selected }) => {
           </button>
         </div>
         <div style={{ width: '2px', height: '50px', backgroundColor: '#9ca3af' }}></div>
-      </div>
+      </div> */}
     </div>
   );
 };

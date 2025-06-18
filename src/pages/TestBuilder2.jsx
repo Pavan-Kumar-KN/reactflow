@@ -4,7 +4,7 @@ import dagre from '@dagrejs/dagre';
 import * as LucideIcons from 'lucide-react';
 
 // Action Node Component with ActivePieces Style
-const ActionTestNode = ({ data, selected }) => {
+const ActionTestNode = ({ data, selected }) => {  
   const IconComponent = data.icon || LucideIcons.Play;
   
   return (

@@ -49,24 +49,131 @@ function LearnFlowBuilder() {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
 
     // Define callback functions after state is initialized
-    const addNodeBelow = useCallback((parentId) => {
-        setNodes((nds) => {
-            const parent = nds.find((n) => n.id === parentId);
-            if (!parent) return nds;
+    // const addNodeBelow = useCallback((parentId) => {
+    //     setNodes((nds) => {
+    //         const parent = nds.find((n) => n.id === parentId);
+    //         if (!parent) return nds;
+
+    //         const newId = `${++nodeId}`;
+    //         const newNode = {
+    //             id: newId,
+    //             type: 'customStyled',
+    //             position: {
+    //                 x: parent.position.x,
+    //                 y: parent.position.y + 200,
+    //             },
+    //             draggable: false,
+    //             data: {
+    //                 label: `Node ${newId}`,
+    //                 onClick: () => addNodeBelow(newId),
+    //                 color: 'text-blue-500',
+    //                 onDelete: () => {
+    //                     setNodes((nodes) => nodes.filter((n) => n.id !== newId));
+    //                     setEdges((edges) => edges.filter((e) => e.source !== newId && e.target !== newId));
+    //                 },
+    //             },
+    //         };
+
+    //         return [...nds, newNode];
+    //     });
+
+    //     setEdges((eds) => [
+    //         ...eds,
+    //         {
+    //             id: `e${parentId}-${nodeId}`,
+    //             source: parentId,
+    //             target: `${nodeId}`,
+    //         },
+    //     ]);
+    // }, [setNodes, setEdges]);
+
+    // const onAddBranchNode = useCallback((parentId, branchType) => {
+    //     let newId;
+    //     setNodes(nds => {
+    //         const parent = nds.find(n => n.id === parentId);
+    //         if (!parent) return nds;
+    //         newId = `${++nodeId}`;
+    //         const newNode = {
+    //             id: newId,
+    //             type: 'customStyled',
+    //             position: {
+    //                 x: parent.position.x + (branchType === 'otherwise' ? 200 : -200),
+    //                 y: parent.position.y + 200,
+    //             },
+    //             draggable: false,
+    //             data: {
+    //                 label: `Action ${newId}`,
+    //                 onClick: () => addNodeBelow(newId),
+    //             },
+    //         };
+    //         return [...nds, newNode];
+    //     });
+
+    //     setEdges(eds => addEdge(
+    //         {
+    //             id: `e-${parentId}-${newId}`,
+    //             source: parentId,
+    //             sourceHandle: branchType, // 'branch1' or 'otherwise'
+    //             target: newId,
+    //             type: 'customWithLabel',
+    //             data: { label: branchType === 'branch1' ? 'Yes' : 'No' },
+    //         },
+    //         eds
+    //     ));
+    // }, [addNodeBelow, setNodes, setEdges]);
+
+    // Initialize nodes with initial data after callbacks are defined
+    // useEffect(() => {
+    //     setNodes([
+    //         {
+    //             id: '1',
+    //             type: 'condition',
+    //             position: { x: 300, y: 100 },
+    //             draggable: false,
+    //             data: {
+    //                 label: 'Start Condition?',
+    //                 branchNodes: { branch1: [], otherwise: [] },
+    //                 onAddBranchNode: onAddBranchNode,
+    //             },
+    //         },
+    //     ]);
+    // }, [onAddBranchNode, setNodes]);
+
+
+
+
+    // useEffect(() => {
+    //     setNodes((nds) =>
+    //         nds.map((node) => ({
+    //             ...node,
+    //             data: { ...node.data, onClick: () => addNodeBelow(node.id) },
+    //         }))
+    //     );
+    // }, [addNodeBelow, setNodes]);
+
+    useEffect(() => {
+
+    }, [])
+
+    const handleAddNode = useCallback((parentId) => {
+        setNodes((prevNodes) => {
+            const parent = prevNodes.find(n => n.id === parentId);
+            if (!parent) return prevNodes;
 
             const newId = `${++nodeId}`;
+            const newY = parent.position.y + 150; // spacing between nodes
+
             const newNode = {
                 id: newId,
                 type: 'customStyled',
                 position: {
                     x: parent.position.x,
-                    y: parent.position.y + 200,
+                    y: newY,
                 },
                 draggable: false,
                 data: {
                     label: `Node ${newId}`,
-                    onClick: () => addNodeBelow(newId),
-                    color: 'text-blue-500',
+                    onClick: () => handleAddNode(newId),
                     onDelete: () => {
                         setNodes((nodes) => nodes.filter((n) => n.id !== newId));
                         setEdges((edges) => edges.filter((e) => e.source !== newId && e.target !== newId));
@@ -74,83 +181,63 @@ function LearnFlowBuilder() {
                 },
             };
 
-            return [...nds, newNode];
+            return [...prevNodes, newNode];
         });
 
-        setEdges((eds) => [
-            ...eds,
+        setEdges((prevEdges) => [
+            ...prevEdges,
             {
                 id: `e${parentId}-${nodeId}`,
                 source: parentId,
                 target: `${nodeId}`,
+                type: 'customWithLabel'
             },
         ]);
     }, [setNodes, setEdges]);
 
-    const onAddBranchNode = useCallback((parentId, branchType) => {
-        let newId;
-        setNodes(nds => {
-            const parent = nds.find(n => n.id === parentId);
-            if (!parent) return nds;
-            newId = `${++nodeId}`;
-            const newNode = {
-                id: newId,
-                type: 'customStyled',
-                position: {
-                    x: parent.position.x + (branchType === 'otherwise' ? 200 : -200),
-                    y: parent.position.y + 200,
-                },
-                draggable: false,
-                data: {
-                    label: `Action ${newId}`,
-                    onClick: () => addNodeBelow(newId),
-                },
-            };
-            return [...nds, newNode];
-        });
 
-        setEdges(eds => addEdge(
-            {
-                id: `e-${parentId}-${newId}`,
-                source: parentId,
-                sourceHandle: branchType, // 'branch1' or 'otherwise'
-                target: newId,
-                type: 'customWithLabel',
-                data: { label: branchType === 'branch1' ? 'Yes' : 'No' },
-            },
-            eds
-        ));
-    }, [addNodeBelow, setNodes, setEdges]);
-
-    // Initialize nodes with initial data after callbacks are defined
     useEffect(() => {
         setNodes([
             {
                 id: '1',
-                type: 'condition',
+                type: 'customStyled',
                 position: { x: 300, y: 100 },
                 draggable: false,
                 data: {
-                    label: 'Start Condition?',
-                    branchNodes: { branch1: [], otherwise: [] },
-                    onAddBranchNode: onAddBranchNode,
-                },
+                    label: 'Start Node',
+                    onClick: () => handleAddNode('1')
+                }
             },
+             {
+                id: '2',
+                type: 'customStyled',
+                position: { x: 300, y: 100 },
+                draggable: false,
+                data: {
+                    label: '2nd  Node',
+                    onClick: () => handleAddNode('1')
+                }
+            }
         ]);
-    }, [onAddBranchNode, setNodes]);
+
+        setEdges([
+            {
+                id: 'e1-2',
+                // type: "default",
+                source: '1',
+                target: '2',
+                label: 'to the ',
+            }
+        ])
 
 
 
 
-    useEffect(() => {
-        setNodes((nds) =>
-            nds.map((node) => ({
-                ...node,
-                data: { ...node.data, onClick: () => addNodeBelow(node.id) },
-            }))
-        );
-    }, [addNodeBelow, setNodes]);
+    }, []);
 
+    console.log("edges is " , edges)
+
+    console.log("nodes is " , nodes)
 
     return (
         <div className="w-full overflow-y-auto overflow-x-hidden bg-gray-50" style={{ height: '100vh' }}>

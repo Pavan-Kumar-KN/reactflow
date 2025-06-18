@@ -1,37 +1,63 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge, useNodesState, useEdgesState, Handle, Position } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
-import * as LucideIcons from 'lucide-react';
+import { RotateCcw, ArrowRight, ArrowDown, CloudLightning } from 'lucide-react';
+import CustomEdgeWithLabel from '../components/custom_edge/CustomEdgeWithLabel';
 
-// Fixed components with proper handles
-const ActionTestNode = ({ data }) => (
-    <div style={{
-        padding: '10px',
-        border: '2px solid #4CAF50',
-        borderRadius: '5px',
-        background: '#E8F5E8',
-        minWidth: '180px',
-        textAlign: 'center',
-        position: 'relative'
-    }}>
-        <Handle
-            type="target"
-            position={Position.Top}
-            id="in"
-            style={{ background: '#4CAF50' }}
-        />
-        {data.label}
-        <Handle
-            type="source"
-            position={Position.Bottom}
-            id="out"
-            style={{ background: '#4CAF50' }}
-        />
-    </div>
-);
+// Enhanced ActionNode with dropdown and copy functionality
+const ActionTestNode = ({ data, sourcePosition, targetPosition, id }) => {
+    const handleCopyClick = (e) => {
+        e.stopPropagation();
+        // Find the node in the current nodes state and set selected to true
+        data.onNodeSelect && data.onNodeSelect(id);
+    };
 
+    return (
+        <div style={{
+            padding: '10px',
+            border: '2px solid #4CAF50',
+            borderRadius: '5px',
+            background: '#E8F5E8',
+            minWidth: '180px',
+            textAlign: 'center',
+            position: 'relative'
+        }}>
+            <Handle
+                type="target"
+                position={targetPosition || Position.Top}
+                id="in"
+                style={{ background: '#4CAF50' }}
+            />
+            <div style={{ marginBottom: '8px' }}>
+                {data.label}
+            </div>
+            <select
+                name="dropdown"
+                onChange={handleCopyClick}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    padding: '4px',
+                    borderRadius: '3px',
+                    border: '1px solid #ccc',
+                    background: 'white',
+                    fontSize: '12px'
+                }}
+            >
+                <option value="">Select action...</option>
+                <option value="copy">Copy</option>
+            </select>
+            <Handle
+                type="source"
+                position={sourcePosition || Position.Bottom}
+                id="out"
+                style={{ background: '#4CAF50' }}
+            />
+        </div>
+    );
+};
 
-const RouterTestNode = ({ data }) => (
+// Enhanced RouterNode with dynamic handle positioning
+const RouterTestNode = ({ data, sourcePosition, targetPosition }) => (
     <div style={{
         padding: '10px',
         border: '2px solid #2196F3',
@@ -43,33 +69,53 @@ const RouterTestNode = ({ data }) => (
     }}>
         <Handle
             type="target"
-            position={Position.Top}
+            position={targetPosition || Position.Top}
             id="in"
             style={{ background: '#2196F3' }}
         />
         {data.label}
         <Handle
             type="source"
-            position={Position.Bottom}
+            position={sourcePosition || Position.Bottom}
             id="out"
             style={{ background: '#2196F3' }}
         />
     </div>
 );
 
+// Enhanced BoxEdge with better orthogonal routing
+const BoxEdge = ({ id, sourceX, sourceY, targetX, targetY, markerEnd, label, sourcePosition, targetPosition }) => {
+    let path;
 
-
-const BoxEdge = ({ id, sourceX, sourceY, targetX, targetY, markerEnd, label }) => {
-    // Calculate a mid-point on Y axis for the horizontal segment (40px below sourceY)
-    const midY = sourceY + 40;
-
-    // Construct path with vertical, horizontal, then vertical segments (orthogonal style)
-    const path = `
-    M ${sourceX},${sourceY}
-    L ${sourceX},${midY}
-    L ${targetX},${midY}
-    L ${targetX},${targetY}
-  `;
+    // Determine path based on source and target positions
+    if (sourcePosition === 'bottom' && targetPosition === 'top') {
+        // Vertical layout: straight down approach
+        const midY = sourceY + Math.abs(targetY - sourceY) / 2;
+        path = `
+            M ${sourceX},${sourceY}
+            L ${sourceX},${midY}
+            L ${targetX},${midY}
+            L ${targetX},${targetY}
+        `;
+    } else if (sourcePosition === 'right' && targetPosition === 'left') {
+        // Horizontal layout: straight right approach
+        const midX = sourceX + Math.abs(targetX - sourceX) / 2;
+        path = `
+            M ${sourceX},${sourceY}
+            L ${midX},${sourceY}
+            L ${midX},${targetY}
+            L ${targetX},${targetY}
+        `;
+    } else {
+        // Fallback to original logic
+        const midY = sourceY + 40;
+        path = `
+            M ${sourceX},${sourceY}
+            L ${sourceX},${midY}
+            L ${targetX},${midY}
+            L ${targetX},${targetY}
+        `;
+    }
 
     return (
         <>
@@ -93,12 +139,18 @@ const BoxEdge = ({ id, sourceX, sourceY, targetX, targetY, markerEnd, label }) =
 };
 
 
+const nodeTypes = {
+    routerNode: RouterTestNode,
+    actionNode: ActionTestNode
+};
 
-const nodeTypes = { routerNode: RouterTestNode, actionNode: ActionTestNode };
-const edgeTypes = { boxEdge: BoxEdge };
+const edgeTypes = {
+    boxEdge: BoxEdge,
+    customWithLabel: CustomEdgeWithLabel
+};
 
-const nodeWidth = 200;
-const nodeHeight = 80;
+const nodeWidth = 260;
+const nodeHeight = 50;
 
 // Simplified function to calculate child counts for edge width
 function calculateChildCounts(nodes, edges) {
@@ -125,12 +177,15 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
     dagreGraph.setDefaultEdgeLabel(() => ({}));
 
     const isHorizontal = direction === 'LR';
+
+    // Enhanced graph configuration with proper spacing
     dagreGraph.setGraph({
         rankdir: direction,
-        nodesep: 80,
-        ranksep: 120,
-        marginx: 20,
-        marginy: 20
+        nodesep: isHorizontal ? 150 : 110, // Horizontal spacing between nodes
+        ranksep: isHorizontal ? 120 : 90,  // Vertical spacing between ranks
+        marginx: 10,
+        marginy: 10,
+        ranker: "longest-path",
     });
 
     // Validate that all nodes and edges are valid
@@ -146,23 +201,35 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
     // Calculate child counts for dynamic edge width
     const childCounts = calculateChildCounts(nodes, validEdges);
 
-    // Set nodes
+    // Set nodes with proper dimensions
     nodes.forEach(node => {
+        let width = node.width || nodeWidth;
+        let height = node.height || nodeHeight;
+
         dagreGraph.setNode(node.id, {
-            width: node.width || nodeWidth,
-            height: node.height || nodeHeight
+            width,
+            height,
         });
     });
 
-    // Set edges
+    // Set edges with proper configuration
     validEdges.forEach(edge => {
-        dagreGraph.setEdge(edge.source, edge.target);
+        const edgeConfig = {
+            weight: 1,
+            minlen: 1
+        };
+
+        if (edge.type === 'condition') {
+            edgeConfig.minlen = 2; // Minimum edge length for better separation
+        }
+
+        dagreGraph.setEdge(edge.source, edge.target, edgeConfig);
     });
 
     // Apply layout
     dagre.layout(dagreGraph);
 
-    // Position nodes
+    // Position nodes with proper handle positions
     const newNodes = nodes.map(node => {
         const nodeWithPosition = dagreGraph.node(node.id);
 
@@ -172,30 +239,33 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
             return node;
         }
 
-        const newNode = {
-            ...node,
-            targetPosition: isHorizontal ? 'left' : 'top',
-            sourcePosition: isHorizontal ? 'right' : 'bottom',
-            position: {
-                x: nodeWithPosition.x - (node.width || nodeWidth) / 2,
-                y: nodeWithPosition.y - (node.height || nodeHeight) / 2,
-            },
+        const finalPosition = {
+            x: nodeWithPosition.x - (node.width || nodeWidth) / 2,
+            y: nodeWithPosition.y - (node.height || nodeHeight) / 2,
         };
 
-        return newNode;
+        return {
+            ...node,
+            targetPosition: isHorizontal ? Position.Left : Position.Top,
+            sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+            position: finalPosition,
+        };
     });
 
-    // Update edges with dynamic widths
+    // Update edges with dynamic widths and proper positioning
     const newEdges = validEdges.map(edge => {
         const sourceChildCount = childCounts[edge.source] || 1;
         const edgeWidth = Math.max(2, Math.min(8, sourceChildCount * 2));
 
         return {
             ...edge,
+            sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+            targetPosition: isHorizontal ? Position.Left : Position.Top,
             style: {
                 ...edge.style,
                 strokeWidth: edgeWidth,
-                stroke: `hsl(${Math.min(sourceChildCount * 40, 240)}, 70%, 50%)`
+                stroke: `hsl(${Math.min(sourceChildCount * 40, 240)}, 70%, 50%)`,
+                opacity: 0.8,
             }
         };
     });
@@ -204,62 +274,61 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 };
 
 const initialNodes = [
-    { id: 'router1', type: 'routerNode', data: { label: 'Main Router' }, width: 200, height: 80 },
-    { id: 'branch1_router', type: 'routerNode', data: { label: 'Branch 1 Router' }, width: 200, height: 80 },
-    { id: 'branch2_node', type: 'actionNode', data: { label: 'Branch 2 Node' }, width: 200, height: 80 },
+    { id: 'trigger', type: 'routerNode', data: { label: 'Select Trigger ⚠️' }, width: 200, height: 80 },
 
-    { id: 'yes_subrouter', type: 'routerNode', data: { label: 'Yes Router' }, width: 200, height: 80 },
-    { id: 'yes_yes_node', type: 'actionNode', data: { label: 'YES → Node' }, width: 200, height: 80 },
-    { id: 'yes_no_router', type: 'routerNode', data: { label: 'Yes No Router' }, width: 200, height: 80 },
-    { id: 'yes_no_node1', type: 'actionNode', data: { label: 'NO → Node 1' }, width: 200, height: 80 },
-    { id: 'yes_no_node2', type: 'actionNode', data: { label: 'NO → Node 2' }, width: 200, height: 80 },
+    { id: 'whatsapp1', type: 'actionNode', data: { label: 'Send WhatsApp Message' }, width: 200, height: 80 },
+    { id: 'sms', type: 'actionNode', data: { label: 'Send SMS Message' }, width: 200, height: 80 },
 
-    { id: 'branch1_no_router', type: 'routerNode', data: { label: 'Branch 1 No Router' }, width: 200, height: 80 },
-    { id: 'branch1_no_node1', type: 'actionNode', data: { label: 'NO → Node 1' }, width: 200, height: 80 },
-    { id: 'branch1_no_node2', type: 'actionNode', data: { label: 'NO → Node 2' }, width: 200, height: 80 },
+    { id: 'contact_tagged', type: 'routerNode', data: { label: 'Contact Tagged' }, width: 200, height: 80 },
 
-    // New router and nodes in the "Otherwise" branch
-    { id: 'otherwise_router', type: 'routerNode', data: { label: 'Otherwise Router' }, width: 200, height: 80 },
-    { id: 'otherwise_node1', type: 'actionNode', data: { label: 'Otherwise Node 1' }, width: 200, height: 80 },
-    { id: 'otherwise_node2', type: 'actionNode', data: { label: 'Otherwise Node 2' }, width: 200, height: 80 },
-    { id: 'otherwise_no_router', type: 'routerNode', data: { label: 'Otherwise No Router' }, width: 200, height: 80 },
-    { id: 'otherwise_no_node1', type: 'actionNode', data: { label: 'Otherwise NO Node 1' }, width: 200, height: 80 },
-    { id: 'otherwise_no_node2', type: 'actionNode', data: { label: 'Otherwise NO Node 2' }, width: 200, height: 80 },
+    { id: 'assigned_staff', type: 'routerNode', data: { label: 'Assigned Staff' }, width: 200, height: 80 },
+
+    { id: 'whatsapp2', type: 'actionNode', data: { label: 'Send WhatsApp Message (Yes)' }, width: 200, height: 80 },
+    { id: 'email', type: 'actionNode', data: { label: 'Send Email (No)' }, width: 200, height: 80 },
+
+    { id: 'webhook', type: 'actionNode', data: { label: 'Webhook (Advanced)' }, width: 200, height: 80 }
 ];
 
 const initialEdges = [
-    { id: 'e1', source: 'router1', sourceHandle: 'out', target: 'branch1_router', targetHandle: 'in', type: 'boxEdge', label: 'Branch 1' },
-    { id: 'e2', source: 'router1', sourceHandle: 'out', target: 'branch2_node', targetHandle: 'in', type: 'boxEdge', label: 'Otherwise' },
+  { id: 'e1', source: 'trigger', sourceHandle: 'out', target: 'whatsapp1', targetHandle: 'in', type: 'customWithLabel', label: 'Action' },
+  { id: 'e2', source: 'whatsapp1', sourceHandle: 'out', target: 'sms', targetHandle: 'in', type: 'customWithLabel', label: 'Action' },
+  { id: 'e3', source: 'sms', sourceHandle: 'out', target: 'contact_tagged', targetHandle: 'in', type: 'boxEdge', label: 'Condition' },
 
-    // Branch 1 Yes branch
-    { id: 'e3', source: 'branch1_router', sourceHandle: 'out', target: 'yes_subrouter', targetHandle: 'in', type: 'boxEdge', label: 'Yes' },
+  // Condition to condition → use boxEdge
+  { id: 'e4', source: 'contact_tagged', sourceHandle: 'out', target: 'assigned_staff', targetHandle: 'in', type: 'boxEdge', label: 'Yes' },
 
-    // Branch 1 No branch with router
-    { id: 'e4', source: 'branch1_router', sourceHandle: 'out', target: 'branch1_no_router', targetHandle: 'in', type: 'boxEdge', label: 'No' },
-    { id: 'e4-1', source: 'branch1_no_router', sourceHandle: 'out', target: 'branch1_no_node1', targetHandle: 'in', type: 'boxEdge', label: 'No 1' },
-    { id: 'e4-2', source: 'branch1_no_router', sourceHandle: 'out', target: 'branch1_no_node2', targetHandle: 'in', type: 'boxEdge', label: 'No 2' },
+  // Condition to action → use customWithLabel
+  { id: 'e5', source: 'contact_tagged', sourceHandle: 'out', target: 'webhook', targetHandle: 'in', type: 'boxEdge', label: 'No Action' },
 
-    // Yes router sub-branches
-    { id: 'e5', source: 'yes_subrouter', sourceHandle: 'out', target: 'yes_yes_node', targetHandle: 'in', type: 'boxEdge', label: 'Yes' },
-    { id: 'e6', source: 'yes_subrouter', sourceHandle: 'out', target: 'yes_no_router', targetHandle: 'in', type: 'boxEdge', label: 'No' },
-
-    // Yes No router sub-branches
-    { id: 'e6-1', source: 'yes_no_router', sourceHandle: 'out', target: 'yes_no_node1', targetHandle: 'in', type: 'boxEdge', label: 'No 1' },
-    { id: 'e6-2', source: 'yes_no_router', sourceHandle: 'out', target: 'yes_no_node2', targetHandle: 'in', type: 'boxEdge', label: 'No 2' },
-
-    // Otherwise branch extended with router and nodes
-    { id: 'e7', source: 'branch2_node', sourceHandle: 'out', target: 'otherwise_router', targetHandle: 'in', type: 'boxEdge', label: 'Router' },
-    { id: 'e7-1', source: 'otherwise_router', sourceHandle: 'out', target: 'otherwise_node1', targetHandle: 'in', type: 'boxEdge', label: 'Node 1' },
-    { id: 'e7-2', source: 'otherwise_router', sourceHandle: 'out', target: 'otherwise_node2', targetHandle: 'in', type: 'boxEdge', label: 'Node 2' },
-
-    // Otherwise No branch with router and nodes
-    { id: 'e8', source: 'otherwise_router', sourceHandle: 'out', target: 'otherwise_no_router', targetHandle: 'in', type: 'boxEdge', label: 'No' },
-    { id: 'e8-1', source: 'otherwise_no_router', sourceHandle: 'out', target: 'otherwise_no_node1', targetHandle: 'in', type: 'boxEdge', label: 'No 1' },
-    { id: 'e8-2', source: 'otherwise_no_router', sourceHandle: 'out', target: 'otherwise_no_node2', targetHandle: 'in', type: 'boxEdge', label: 'No 2' },
+  { id: 'e6', source: 'assigned_staff', sourceHandle: 'out', target: 'whatsapp2', targetHandle: 'in', type: 'boxEdge', label: 'Yes Action' },
+  { id: 'e7', source: 'assigned_staff', sourceHandle: 'out', target: 'email', targetHandle: 'in', type: 'boxEdge', label: 'No Action' }
 ];
 
+
+
 export default function TestBuilder() {
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(initialNodes, initialEdges);
+    const [layoutDirection, setLayoutDirection] = useState('TB');
+    const [selectedNodeId, setSelectedNodeId] = useState(null);
+
+    // Add onNodeSelect callback to initial nodes
+    const nodesWithCallback = initialNodes.map(node => ({
+        ...node,
+        data: {
+            ...node.data,
+            onNodeSelect: (nodeId) => {
+                setSelectedNodeId(nodeId);
+                setNodes(currentNodes =>
+                    currentNodes.map(n =>
+                        n.id === nodeId
+                            ? { ...n, selected: true }
+                            : { ...n, selected: false }
+                    )
+                );
+            }
+        }
+    }));
+
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodesWithCallback, initialEdges, layoutDirection);
 
     const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
@@ -270,15 +339,33 @@ export default function TestBuilder() {
 
         // Re-layout after new connection
         setTimeout(() => {
-            const { nodes: newLayoutedNodes, edges: newLayoutedEdges } = getLayoutedElements(nodes, [...edges, newEdge]);
+            const { nodes: newLayoutedNodes, edges: newLayoutedEdges } = getLayoutedElements(nodes, [...edges, newEdge], layoutDirection);
             setNodes(newLayoutedNodes);
             setEdges(newLayoutedEdges);
         }, 100);
-    }, [nodes, edges, setNodes, setEdges]);
+    }, [nodes, edges, setNodes, setEdges, layoutDirection]);
 
     // Function to manually trigger re-layout
     const relayoutTree = useCallback((direction = 'TB') => {
-        const { nodes: newLayoutedNodes, edges: newLayoutedEdges } = getLayoutedElements(nodes, edges, direction);
+        setLayoutDirection(direction);
+        const updatedNodes = nodes.map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                onNodeSelect: (nodeId) => {
+                    setSelectedNodeId(nodeId);
+                    setNodes(currentNodes =>
+                        currentNodes.map(n =>
+                            n.id === nodeId
+                                ? { ...n, selected: true }
+                                : { ...n, selected: false }
+                        )
+                    );
+                }
+            }
+        }));
+
+        const { nodes: newLayoutedNodes, edges: newLayoutedEdges } = getLayoutedElements(updatedNodes, edges, direction);
         setNodes(newLayoutedNodes);
         setEdges(newLayoutedEdges);
     }, [nodes, edges, setNodes, setEdges]);
@@ -289,7 +376,19 @@ export default function TestBuilder() {
         const newNode = {
             id: newNodeId,
             type: nodeData.type || 'actionNode',
-            data: nodeData,
+            data: {
+                ...nodeData,
+                onNodeSelect: (nodeId) => {
+                    setSelectedNodeId(nodeId);
+                    setNodes(currentNodes =>
+                        currentNodes.map(n =>
+                            n.id === nodeId
+                                ? { ...n, selected: true }
+                                : { ...n, selected: false }
+                        )
+                    );
+                }
+            },
             width: 200,
             height: 80,
             position: { x: 0, y: 0 }
@@ -309,10 +408,45 @@ export default function TestBuilder() {
         const updatedEdges = [...edges, newEdge];
 
         // Re-layout with new node
-        const { nodes: newLayoutedNodes, edges: newLayoutedEdges } = getLayoutedElements(updatedNodes, updatedEdges);
+        const { nodes: newLayoutedNodes, edges: newLayoutedEdges } = getLayoutedElements(updatedNodes, updatedEdges, layoutDirection);
         setNodes(newLayoutedNodes);
         setEdges(newLayoutedEdges);
-    }, [nodes, edges, setNodes, setEdges]);
+    }, [nodes, edges, setNodes, setEdges, layoutDirection]);
+
+    // Effect to re-layout when direction changes
+    useEffect(() => {
+        const updatedNodes = nodes.map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                onNodeSelect: (nodeId) => {
+                    setSelectedNodeId(nodeId);
+                    setNodes(currentNodes =>
+                        currentNodes.map(n =>
+                            n.id === nodeId
+                                ? { ...n, selected: true }
+                                : { ...n, selected: false }
+                        )
+                    );
+                }
+            }
+        }));
+
+        const { nodes: newLayoutedNodes, edges: newLayoutedEdges } = getLayoutedElements(updatedNodes, edges, layoutDirection);
+        setNodes(newLayoutedNodes);
+        setEdges(newLayoutedEdges);
+    }, [layoutDirection]);
+
+    const handleNodeClick = useCallback((event, node) => {
+        // console.log('Node clicked:', node);
+    }, []);
+
+    // Log selected nodes
+    nodes.forEach((node) => {
+        if (node.selected) {
+            console.log("Selected node:", node);
+        }
+    });
 
     return (
         <div style={{ width: '100%', height: '100vh' }}>
@@ -321,6 +455,7 @@ export default function TestBuilder() {
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
+                onNodeClick={handleNodeClick}
                 onConnect={onConnect}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
@@ -338,9 +473,79 @@ export default function TestBuilder() {
                 padding: '10px',
                 borderRadius: '5px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                zIndex: 1000
+                zIndex: 1000,
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'center'
             }}>
+                <button
+                    onClick={() => relayoutTree('TB')}
+                    style={{
+                        padding: '8px 12px',
+                        backgroundColor: layoutDirection === 'TB' ? '#2196F3' : '#f5f5f5',
+                        color: layoutDirection === 'TB' ? 'white' : 'black',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                    }}
+                >
+                    <ArrowDown size={16} />
+                    Vertical
+                </button>
+                <button
+                    onClick={() => relayoutTree('LR')}
+                    style={{
+                        padding: '8px 12px',
+                        backgroundColor: layoutDirection === 'LR' ? '#2196F3' : '#f5f5f5',
+                        color: layoutDirection === 'LR' ? 'white' : 'black',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                    }}
+                >
+                    <ArrowRight size={16} />
+                    Horizontal
+                </button>
+                <button
+                    onClick={() => relayoutTree(layoutDirection)}
+                    style={{
+                        padding: '8px 12px',
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px'
+                    }}
+                >
+                    <RotateCcw size={16} />
+                    Re-layout
+                </button>
             </div>
+            {selectedNodeId && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: 20,
+                    left: 20,
+                    background: 'white',
+                    padding: '10px',
+                    borderRadius: '5px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    zIndex: 1000,
+                    color: '#4CAF50',
+                    fontWeight: 'bold'
+                }}>
+                    Selected Node: {selectedNodeId}
+                </div>
+            )}
         </div>
     );
 }

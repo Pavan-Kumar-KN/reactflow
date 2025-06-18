@@ -12,6 +12,8 @@ import LearnFlowBuilder from './pages/LearnFlowBuilder';
 import './index.css'
 import TestBuilder from './pages/TestBuilder';
 import TestBuilder2 from './pages/TestBuilder2';
+import ELKBuilder from './pages/ELKBuilder';
+import WorkflowPOC from './pages/WorkflowPOC';
 
 
 const initialNodes = [
@@ -164,7 +166,13 @@ defaultEdgeOptions={defaultEdgeOptions}
       {/* <WorkFlowBuilder2/> */}
       {/* <LearnFlowBuilder/> */}
 
-      <TestBuilder2 />
+      {/* <TestBuilder2 /> */}
+
+      {/* <ELKBuilder/> */}
+
+      <TestBuilder/>
+
+      {/* <WorkflowPOC /> */}
     </div>
   )
 }
