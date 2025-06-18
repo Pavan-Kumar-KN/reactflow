@@ -1,0 +1,107 @@
+import React, { useCallback, useState } from 'react';
+import { ReactFlow, applyEdgeChanges, applyNodeChanges, addEdge } from '@xyflow/react';
+
+import '@xyflow/react/dist/style.css';
+
+
+const initialNodes = [
+  {
+    id: '1',
+    type: 'input',
+    data: { label: 'Input Node' },
+    position: { x: 250, y: 25 },
+  },
+
+  {
+    id: '2',
+    // you can also pass a React component as a label
+    data: { label: <div>Default Node</div> },
+    position: { x: 100, y: 125 },
+  },
+  {
+    id: '3',
+    type: 'output',
+    data: { label: 'Output Node' },
+    position: { x: 250, y: 250 },
+  },
+];
+
+// const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
+
+const initialEdges = [
+  { id: 'e1-2', source: '1', target: '2', animated: true },
+  { id: 'e2-3', source: '2', target: '3', animated: true },
+];
+
+
+const App = () => {
+  // Method 01: for creating nodes and edges 
+  // const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  // const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+
+  // Method 02: simple way for creating nodes and edges
+  const [nodes, setNodes] = useState(initialNodes);
+  const [edges, setEdges] = useState(initialEdges);
+
+  // Here we are apply those node changes to the respective node and that's we are using useCallback function 
+  const onNodeChange = useCallback((changes) => setNodes((node) => applyNodeChanges(changes, node)),
+    [setNodes]
+  );
+
+
+  const onEdgesChange = useCallback((changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    [setEdges]
+  );
+
+  // if we want to create new connection then this function will create new edge(connection) between noodes 
+  const onConnect = useCallback((connection) => setEdges((eds) => addEdge({ ...connection, animated: true }, eds))
+    , [setEdges]);
+
+  /* 
+  we can create the edges with animation also or if we just line then we can go with 
+  addEdge(connection , eds) -> without styles
+  addEdge({...connection , animation: true} , eds) -> with style 
+
+  // Method 3 of desiging the edges 
+  const defaultEdgeOptions = { animated: true };
+...
+<ReactFlow
+nodes={nodes}
+edges={edges}
+onNodesChange={onNodesChange}
+onEdgesChange={onEdgesChange}
+onConnect={onConnect}
+defaultEdgeOptions={defaultEdgeOptions}
+/>;
+
+
+  */
+
+
+  return (
+    <div style={{ width: '100vw', height: '100vh' }}>
+      {/* This will help to implement the dragable component  */}
+      {/* <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+      /> */}
+
+      {/* this is the main component to render the nodes  */}
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodeChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        fitView
+      />
+
+    </div>
+  )
+}
+
+export default App
