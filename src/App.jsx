@@ -1,7 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { ReactFlow, applyEdgeChanges, applyNodeChanges, addEdge } from '@xyflow/react';
+import { ReactFlow, applyEdgeChanges, applyNodeChanges, addEdge, MiniMap, Controls } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
+import Flow from './components/flow';
+import HandleEdge from './components/custom_nodes/HandleEdge';
 
 
 const initialNodes = [
@@ -79,9 +81,25 @@ defaultEdgeOptions={defaultEdgeOptions}
   */
 
 
+  const nodeColor = (node) => {
+    switch (node.type) {
+      case 'input':
+        return '#6ede87';
+      case 'output':
+        return '#6865A5';
+      default:
+        return '#ff0072';
+    }
+  };
+
+  // using react flow inbuilt we can change the background 
+  const [variant, setVariant] = useState('cross');
+
+
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       {/* This will help to implement the dragable component  */}
+
       {/* <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -90,15 +108,32 @@ defaultEdgeOptions={defaultEdgeOptions}
         onConnect={onConnect}
       /> */}
 
-      {/* this is the main component to render the nodes  */}
-      <ReactFlow
+      {/* this is the main component to render the nodes  and mini mind map */}
+      {/* <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodeChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         fitView
-      />
+
+      >
+        <MiniMap nodeColor={nodeColor} nodeStrokeWidth={3} zoomable pannable />
+      <Background color="#ccc" variant={variant} />
+        <Panel>
+        <div>variant:</div>
+        <button onClick={() => setVariant('dots')}>dots</button>
+        <button onClick={() => setVariant('lines')}>lines</button>
+        <button onClick={() => setVariant('cross')}>cross</button>+
+        </Panel>
+
+
+        <Controls />
+      </ReactFlow> */}  
+
+      {/* <Flow/>*/}
+
+      <HandleEdge />
 
     </div>
   )
