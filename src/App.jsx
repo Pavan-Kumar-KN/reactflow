@@ -1,9 +1,12 @@
 import React, { useCallback, useState } from 'react';
-import { ReactFlow, applyEdgeChanges, applyNodeChanges, addEdge, MiniMap, Controls } from '@xyflow/react';
+import { ReactFlow, applyEdgeChanges, applyNodeChanges, addEdge, MiniMap, Controls, Background, Panel } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
 import Flow from './components/flow';
 import HandleEdge from './components/custom_nodes/HandleEdge';
+import SpecificationModal from './components/SpecificationModel';
+import WorkFlowBuilder from './pages/workFlowBuilder';
+import WorkFlowBuilder2 from './pages/WorkFlowBuilder2';
 
 
 const initialNodes = [
@@ -95,6 +98,17 @@ defaultEdgeOptions={defaultEdgeOptions}
   // using react flow inbuilt we can change the background 
   const [variant, setVariant] = useState('cross');
 
+  // onNodeClick 
+  const [selectedNode, setSelectedNode] = useState(null);
+
+  const onNodeClick = useCallback((event , node) =>{
+    setSelectedNode(node);
+  })
+
+
+  const closeModel = () => {
+    setSelectedNode(null);
+  }
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
@@ -109,12 +123,13 @@ defaultEdgeOptions={defaultEdgeOptions}
       /> */}
 
       {/* this is the main component to render the nodes  and mini mind map */}
-      {/* <ReactFlow
+     {/* <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodeChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeClick={onNodeClick}
         fitView
 
       >
@@ -129,11 +144,19 @@ defaultEdgeOptions={defaultEdgeOptions}
 
 
         <Controls />
-      </ReactFlow> */}  
+      </ReactFlow> 
 
-      {/* <Flow/>*/}
+      {
+        selectedNode && (
+          <SpecificationModal node = {selectedNode} onClose={closeModel}/>
+        )
+      } */}
 
-      <HandleEdge />
+      {/* <Flow/> */}
+
+      {/* <HandleEdge /> */}
+
+      <WorkFlowBuilder2/>
 
     </div>
   )
