@@ -66,16 +66,12 @@ const WorkFlowBuilder = () => {
         console.log('Flow JSON:', JSON.stringify(json, null, 2));
     };
 
-
-
-
     const onDragOver = useCallback((event) => {
         event.preventDefault();
 
         console.log(event)
         event.dataTransfer.dropEffect = 'move'
     }, []);
-
 
     const onDrop = useCallback((event) => {
         event.preventDefault();
