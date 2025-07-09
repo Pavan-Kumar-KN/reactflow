@@ -38,7 +38,7 @@ const WorkFlowBuilder2 = () => {
         });
 
         console.log(`[${action.toUpperCase()}] Generated Workflow JSON:`, JSON.stringify(workflowJSON, null, 2));
-        
+
         // Validate the JSON
         const isValid = validateWorkflowJSON(workflowJSON);
         if (isValid) {
@@ -84,7 +84,7 @@ const WorkFlowBuilder2 = () => {
                 const updatedNodes = nds.filter(n => !deletedNodes.some(dn => dn.id === n.id));
                 // Also remove edges connected to deleted nodes
                 setEdges((eds) => {
-                    const updatedEdges = eds.filter(e => 
+                    const updatedEdges = eds.filter(e =>
                         !deletedNodes.some(dn => dn.id === e.source || dn.id === e.target)
                     );
                     generateAndLogWorkflowJSON(updatedNodes, updatedEdges, 'node_deleted');
@@ -198,7 +198,7 @@ const WorkFlowBuilder2 = () => {
         setEdges((eds) => {
             const updatedEdges = applyEdgeChanges(changes, eds);
             // Only generate JSON for significant changes (not just selection)
-            const hasSignificantChange = changes.some(change => 
+            const hasSignificantChange = changes.some(change =>
                 change.type === 'remove' || change.type === 'add'
             );
             if (hasSignificantChange) {
@@ -212,7 +212,7 @@ const WorkFlowBuilder2 = () => {
         setNodes((nds) => {
             const updatedNodes = applyNodeChanges(changes, nds);
             // Only generate JSON for significant changes
-            const hasSignificantChange = changes.some(change => 
+            const hasSignificantChange = changes.some(change =>
                 change.type === 'remove' || change.type === 'add' || change.type === 'position'
             );
             if (hasSignificantChange) {
@@ -225,7 +225,7 @@ const WorkFlowBuilder2 = () => {
     // Function to manually trigger JSON generation (useful for saving)
     const saveWorkflow = useCallback(() => {
         const workflowJSON = generateAndLogWorkflowJSON(nodes, edges, 'manual_save');
-        
+
         // Here you would typically send to your backend
         // Example:
         // fetch('/api/workflows', {
@@ -252,7 +252,7 @@ const WorkFlowBuilder2 = () => {
             }));
             setEdges(loadedEdges);
         }
-        
+
         setWorkflowMetadata({
             name: workflowJSON.name,
             description: workflowJSON.description,
@@ -263,13 +263,22 @@ const WorkFlowBuilder2 = () => {
         console.log('Workflow loaded successfully');
     }, []);
 
+
+    const initialEdges = [
+        { id: 'e1-2', source: '1', target: 'placeholder-1' },
+    ]
+
+    const intialNodes = [
+        { id: '1', type: 'triggerNode', position: { x: 250, y: 5 }, data: { label: 'Trigger Node' } },
+        { id: 'placeholder-1', type: 'placeholderNode', position: { x: 250, y: 100 }, data: { label: 'Placeholder Node' } },
+    ]
     return (
         <>
             <ReactFlowProvider>
                 <div style={{ flexGrow: 1 }}
-                     onDrop={onDrop}
-                     onDragOver={onDragOver}>
-                    
+                    onDrop={onDrop}
+                    onDragOver={onDragOver}>
+
                     {/* Optional: Add workflow controls */}
                     <div style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>
                         <button onClick={saveWorkflow} style={{ marginRight: '10px' }}>
@@ -285,8 +294,8 @@ const WorkFlowBuilder2 = () => {
                         <Sidebar />
 
                         <ReactFlow
-                            nodes={nodes}
-                            edges={edges}
+                            nodes={intialNodes}
+                            edges={initialEdges}
                             onConnect={onConnect}
                             onEdgesDelete={onEdgesDelete}
                             onNodesDelete={onNodesDelete}

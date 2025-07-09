@@ -1,0 +1,19 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
+.react-flow__pane {
+  pointer-events: none; /* disables background interactions like dragging */
+}
+
+.react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.react-flow__node:hover .react-flow__handle {
+  opacity: 1;
+  pointer-events: all;
+}

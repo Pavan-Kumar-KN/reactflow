@@ -7,6 +7,11 @@ import HandleEdge from './components/custom_nodes/HandleEdge';
 import SpecificationModal from './components/SpecificationModel';
 import WorkFlowBuilder from './pages/workFlowBuilder';
 import WorkFlowBuilder2 from './pages/WorkFlowBuilder2';
+import LearnFlowBuilder from './pages/LearnFlowBuilder';
+
+import './index.css'
+import TestBuilder from './pages/TestBuilder';
+import TestBuilder2 from './pages/TestBuilder2';
 
 
 const initialNodes = [
@@ -101,7 +106,7 @@ defaultEdgeOptions={defaultEdgeOptions}
   // onNodeClick 
   const [selectedNode, setSelectedNode] = useState(null);
 
-  const onNodeClick = useCallback((event , node) =>{
+  const onNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
   })
 
@@ -123,7 +128,7 @@ defaultEdgeOptions={defaultEdgeOptions}
       /> */}
 
       {/* this is the main component to render the nodes  and mini mind map */}
-     {/* <ReactFlow
+      {/* <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodeChange}
@@ -156,8 +161,10 @@ defaultEdgeOptions={defaultEdgeOptions}
 
       {/* <HandleEdge /> */}
 
-      <WorkFlowBuilder2/>
+      {/* <WorkFlowBuilder2/> */}
+      {/* <LearnFlowBuilder/> */}
 
+      <TestBuilder2 />
     </div>
   )
 }
